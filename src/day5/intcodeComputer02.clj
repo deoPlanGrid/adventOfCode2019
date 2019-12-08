@@ -24,45 +24,58 @@
     \1 ind))
 
 (defn add
-  [modes stream prog]
-  (let [[i j k] (take 3 stream)]
-    (assoc prog k
-           (+
-            (get-prog-val
-             (get modes 2) i prog)
-            (get-prog-val
-             (get modes 1) j prog)))))
+  [modes pos prog]
+  (let [[i j k] (subvec prog (+ 1 pos) (+ 1 pos 3))]
+    [(assoc prog k
+            (+
+             (get-prog-val
+              (get modes 2) i prog)
+             (get-prog-val
+              (get modes 1) j prog)))
+     (+ pos 4)]))
 
 (defn times
-  [modes stream prog]
-  (let [[i j k] (take 3 stream)]
-    (assoc prog k
-           (*
-            (get-prog-val
-             (get modes 2) i prog)
-            (get-prog-val
-             (get modes 1) j prog)))))
+  [modes pos prog]
+  (let [[i j k] (subvec prog (+ 1 pos) (+ 1 pos 3))]
+    [(assoc prog k
+            (*
+             (get-prog-val
+              (get modes 2) i prog)
+             (get-prog-val
+              (get modes 1) j prog)))
+     (+ pos 4)]))
 
 (defn get-input
-  [modes stream prog]
+  [modes pos prog]
   (let [user-input (do (print "Input value: ") (flush) (read-line))
         new-num (Integer/parseInt user-input)
-        ind (first stream)]
-    (assoc prog ind new-num)))
+        ind (get-prog-val (get modes 2) (+ pos 1) prog)]
+    [(assoc prog ind new-num)
+     (+ pos 2)]))
 
 (defn get-output
-  [modes stream prog]
-  (let [ind (first stream)]
+  [modes pos prog]
+  (let [ind (get-prog-val (get modes 2) (+ pos 1) prog)]
     (println (str "Value at index " ind ": " (get prog ind)))
-    prog))
+    [prog (+ pos 2)]))
+
+(defn jump-if-true
+  [modes pos prog]
+  (let [check (get-prog-val (get modes 2) (+ pos 1) prog)
+        ind (get-prog-val (get modes 1) (+ pos 2) prog)]
+    (if (not= 0 check)
+      [prog ind]
+      [prog (+ pos 2)])))
 
 (defn opcode-switch
-  [opcode tail prog]
-  (case (last opcode)
-    \1 [(add opcode tail prog) 3]
-    \2 [(times opcode tail prog) 3]
-    \3 [(get-input opcode tail prog) 1]
-    \4 [(get-output opcode tail prog) 1]))
+  [opcode pos prog]
+  (let [func (case (last opcode)
+               \1 add
+               \2 times
+               \3 get-input
+               \4 get-output
+               \5 jump-if-true)]
+    (func opcode pos prog)))
 
 (defn get-instruction
   [{:keys [prog pos]}]
@@ -71,9 +84,7 @@
 (defn execute-instruction
   [{:keys [prog pos]}]
   (let [opcode (format-opcode (str (get-instruction {:prog prog :pos pos})))
-        tail (drop (+ 1 pos) prog)
-        [new-prog params] (opcode-switch opcode tail prog)
-        new-pos (+ pos 1 params)]
+        [new-prog new-pos] (opcode-switch opcode pos prog)]
     {:prog new-prog
      :pos new-pos}))
 
@@ -81,6 +92,7 @@
   [intcode-prog]
   (loop [input {:prog (vec intcode-prog)
                 :pos 0}]
+    (println input)
     (if (and
          (some? (get-instruction input)) (not= 99 (get-instruction input)))
       (recur (execute-instruction input)))))
