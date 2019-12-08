@@ -61,11 +61,37 @@
 
 (defn jump-if-true
   [modes pos prog]
-  (let [check (get-prog-val (get modes 2) (+ pos 1) prog)
-        ind (get-prog-val (get modes 1) (+ pos 2) prog)]
+  (let [[i j] (subvec prog (+ 1 pos) (+ 1 pos 2))
+        check (get-prog-val (get modes 2) i prog)
+        ind (get-prog-val (get modes 1) j prog)]
     (if (not= 0 check)
       [prog ind]
-      [prog (+ pos 2)])))
+      [prog (+ pos 3)])))
+
+(defn jump-if-false
+  [modes pos prog]
+  (let [[i j] (subvec prog (+ 1 pos) (+ 1 pos 2))
+        check (get-prog-val (get modes 2) i prog)
+        ind (get-prog-val (get modes 1) j prog)]
+    (if (= 0 check)
+      [prog ind]
+      [prog (+ pos 3)])))
+
+(defn less-than
+  [modes pos prog]
+  (let [[i j k] (subvec prog (+ 1 pos) (+ 1 pos 3))
+        n0 (get-prog-val (get modes 2) i prog)
+        n1 (get-prog-val (get modes 1) j prog)
+        res (if (< n0 n1) 1 0)]
+    [(assoc prog k res) (+ pos 4)]))
+
+(defn equals
+  [modes pos prog]
+  (let [[i j k] (subvec prog (+ 1 pos) (+ 1 pos 3))
+        n0 (get-prog-val (get modes 2) i prog)
+        n1 (get-prog-val (get modes 1) j prog)
+        res (if (= n0 n1) 1 0)]
+    [(assoc prog k res) (+ pos 4)]))
 
 (defn opcode-switch
   [opcode pos prog]
@@ -74,7 +100,10 @@
                \2 times
                \3 get-input
                \4 get-output
-               \5 jump-if-true)]
+               \5 jump-if-true
+               \6 jump-if-false
+               \7 less-than
+               \8 equals)]
     (func opcode pos prog)))
 
 (defn get-instruction
@@ -92,7 +121,6 @@
   [intcode-prog]
   (loop [input {:prog (vec intcode-prog)
                 :pos 0}]
-    (println input)
     (if (and
          (some? (get-instruction input)) (not= 99 (get-instruction input)))
       (recur (execute-instruction input)))))
