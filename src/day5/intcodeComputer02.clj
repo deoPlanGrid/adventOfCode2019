@@ -1,7 +1,6 @@
 (ns day5.intcodeComputer02
   (:require [clojure.tools.cli :refer [parse-opts]]
-            [clojure.string :refer [split trim-newline trim]]
-            [clojure.edn :as edn])
+            [clojure.string :refer [split trim-newline trim]])
   (:gen-class))
 
 (def cli-options
