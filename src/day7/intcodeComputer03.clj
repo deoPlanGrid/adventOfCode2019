@@ -1,20 +1,12 @@
 (ns day7.intcodeComputer03
   (:require [clojure.tools.cli :refer [parse-opts]]
-            [clojure.string :refer [split trim-newline trim join]]
-            [clojure.math.combinatorics :refer [permutations]]
-            [clojure.edn :as edn]
-            [clojure.java.io :as io])
+            [clojure.string :refer [join]]
+            [clojure.math.combinatorics :refer [permutations]])
   (:gen-class))
 
 (def cli-options
   [[nil "--input-prog INPUTPROG" "Path to input intcode program"]
    [nil "--feedback-mode" "Run program in feedback mode"]])
-
-(defn read-edn-data
-  [path]
-  (try
-    (with-open [r (io/reader path)]
-      (edn/read (java.io.PushbackReader. r)))))
 
 (defn format-opcode
   [opcode]
